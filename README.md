@@ -8,7 +8,7 @@ Ben Bun will automatically handle all of your React page's routes as well as you
 
 Simply create a "react-routes.js" file at the root directory of your Bun project to automatically manage the React Pages of your frontend.
 
-The React component that you export from your tsx file must be a <Page> component as this is what Ben Bun uses to bind your pages to routes using your react-routes.js file.
+The React component that you export from your tsx file must be a "Page" component as this is what Ben Bun uses to bind your pages to routes using your react-routes.js file.
 
 Your "react-routes.js" should be formatted like this and located in your root directory:
 
@@ -89,6 +89,16 @@ const server = Bun.serve<WebSocketData>({
 
 Use as you like, I made this because I couldn't find something that did what Ben Bun does.
 I just wanted server side routing with automatic client side hydration.
+
+You can also add any kind of route you want:
+```typescript
+router.add("GET", "/your-route", (request,params,urlPatternResult)=>{
+    return new Response("The GET Route");
+});
+router.add("POST", "/post-route", (request,params,urlPatternResult)=>{
+    return new Response({key: "value"} as any);
+});
+```
 
 ## Disclaimer
 
