@@ -1,0 +1,39 @@
+{
+  "name": "@ipinzi/benbun-react-router",
+  "version": "0.1.2",
+  "main": "index.ts",
+  "types": "index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "license": "ISC",
+  "description": "Ben Bun React Router is a library for delivering server side rendered content via server only routes while maintaining React's ability to rehydrate the DOM.",
+  "bugs": "https://github.com/ipinzi/ben-bun-react-router/issues",
+  "author": "Ben Simpson (ipinzi) - Arrogant Pixel <ben@arrogantpixel.com>",
+  "homepage": "https://github.com/ipinzi/ben-bun-react-router#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ipinzi/ben-bun-react-router.git"
+  },
+  "dependencies": {
+  "@types/bun": "^1.0.0",
+  "@types/react": "^18.3.2",
+  "@types/react-dom": "^18.3.0",
+  "@types/web": "^0.0.147",
+  "bun-plugin-dts": "^0.2.1",
+  "react": "^19.0.0-rc-d3ce0d3ea9-20240520",
+  "react-dom": "^19.0.0-rc-d3ce0d3ea9-20240520",
+  "typescript": "^5.2.2",
+  "fs": "^0.0.1-security",
+  "urlpattern-polyfill": "^10.0.0"
+},
+  "keywords": [
+  "typescript",
+  "bun",
+  "react",
+  "library",
+  "npm",
+  "node",
+  "nodejs"
+]
+}
