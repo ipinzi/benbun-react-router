@@ -68,12 +68,14 @@ The GetStream function is used to send the html data to the client.
 Example Usage:
 
 ```typescript
+import {Router, Build} from "benbun-react-router";
+
 //Router must inject the routes before building frontend to sync react
 export const router = new Router();
 //Build the needed frontend file for react hydration
 await Build();
 
-const server = Bun.serve<WebSocketData>({
+const server = Bun.serve({
     fetch(req, server) {
 
         const headers = {"Set-Cookie": "I generally send the session cookie here!", "Content-Type": "text/html; charset=utf-8"}
