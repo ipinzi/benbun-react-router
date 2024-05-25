@@ -17,16 +17,15 @@ class Node {
 
 export class Router {
   root: Node;
-  private routeList: Route[] = [];
+
   constructor() {
     this.root = new Node();
-    // Add routes from routeMap to routeList
+    // Add routes from routeMap
     for (const routesKey in routes) {
       if (routesKey === undefined) continue;
 
-      this.add('GET', routesKey, async req => {
+      this.add('GET', routesKey, async (req, params) => {
         const stream = await routes[routesKey].GetStream();
-
         return new Response(stream, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
       });
     }
@@ -58,28 +57,32 @@ export class Router {
   }
 
   public async route(req: Request, headers: { 'Set-Cookie': string; 'Content-Type': string }) {
+    // Parse the query string into an object
+    const url = new URL(req.url);
+    const params = Object.fromEntries(url.searchParams.entries());
+
     // Use routeList for all routes
-    const response = await this.match(req);
+    const response = await this.match(req, params);
     if (response) {
       response.headers.append('Set-Cookie', headers['Set-Cookie']);
       return response;
     }
 
-    const path = new URL(req.url).pathname;
+    const path = url.pathname;
     const filepath = path.slice(1);
 
     if (path.startsWith('/public/')) {
       return new Response(Bun.file(filepath));
     }
+
     return new Response('404 page not found.', { headers, status: 404 });
   }
-  match(req: Request): Promise<Response> | Response {
+
+  match(req: Request, queryParameters: URLPatternResultParams): Promise<Response> | Response {
     let node = this.root;
-    let parts = req.url.split("/");
+    const url = new URL(req.url);
+    let parts = url.pathname.split("/");
     parts.shift(); // Remove the first empty string from the parts array
-    parts.shift();
-    parts.shift();
-    let params: URLPatternResultParams = {};
 
     for (let part of parts) {
       if (node.children.has("/"+part)) {
@@ -88,25 +91,20 @@ export class Router {
         // Check if there's a matching URL parameter
         let paramNode = Array.from(node.params.values())[0];
         if (paramNode) {
-          params[paramNode.params.keys().next().value.slice(1)] = part;
           node = paramNode;
         }
       }
     }
 
     if (node.isEnd && node.handler) {
-      return node.handler(req, params, {pathname: req.url});
+      return node.handler(req, queryParameters);
     }
   }
+
 }
 
 export type URLPatternResultParams = { [key: string]: string | undefined };
 type Handler = (
     request: Request,
     params: URLPatternResultParams,
-    urlPatternResult: URLPatternResult,
 ) => Response | Promise<Response>;
-
-class Route {
-  constructor(public method: string, public urlPattern: URLPattern, public handler: Handler) {}
-}
