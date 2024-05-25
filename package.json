@@ -1,6 +1,6 @@
 {
   "name": "benbun-react-router",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "main": "index.ts",
   "types": "index.d.ts",
   "scripts": {
