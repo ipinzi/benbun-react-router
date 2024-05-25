@@ -1,10 +1,25 @@
 import { URLPattern } from 'urlpattern-polyfill';
 import { routes } from './routeMap.ts';
 
-export class Router {
-  private routeList: Route[] = [];
+class Node {
+  isEnd: boolean;
+  handler: Handler | null;
+  children: Map<string, Node>;
+  params: Map<string, Node>;
 
   constructor() {
+    this.isEnd = false;
+    this.handler = null;
+    this.children = new Map<string, Node>();
+    this.params = new Map<string, Node>();
+  }
+}
+
+export class Router {
+  root: Node;
+  private routeList: Route[] = [];
+  constructor() {
+    this.root = new Node();
     // Add routes from routeMap to routeList
     for (const routesKey in routes) {
       if (routesKey === undefined) continue;
@@ -17,16 +32,29 @@ export class Router {
     }
   }
 
-  public add(method: string, pattern: string, handler: Handler): void {
-    method = method.toUpperCase();
-    const route = new Route(
-      method,
-      new URLPattern({
-        pathname: pattern,
-      }),
-      handler,
-    );
-    this.routeList.push(route);
+  add(method: string, path: string, handler: Handler): void {
+    let node = this.root;
+    let parts = path.split("/");
+    parts.shift(); // Remove the first empty string from the parts array
+
+    for (let part of parts) {
+      if (part.startsWith(":")) {
+        // This is a URL parameter
+        if (!node.params.has(part)) {
+          node.params.set(part, new Node());
+        }
+        node = node.params.get(part)!;
+      } else {
+        // This is a normal part of the path
+        if (!node.children.has("/"+part)) {
+          node.children.set("/"+part, new Node());
+        }
+        node = node.children.get("/"+part)!;
+      }
+    }
+
+    node.isEnd = true;
+    node.handler = handler;
   }
 
   public async route(req: Request, headers: { 'Set-Cookie': string; 'Content-Type': string }) {
@@ -39,35 +67,44 @@ export class Router {
 
     const path = new URL(req.url).pathname;
     const filepath = path.slice(1);
+
     if (path.startsWith('/public/')) {
-      // console.log("Attempting public path: "+filepath);
       return new Response(Bun.file(filepath));
     }
     return new Response('404 page not found.', { headers, status: 404 });
   }
+  match(req: Request): Promise<Response> | Response {
+    let node = this.root;
+    let parts = req.url.split("/");
+    parts.shift(); // Remove the first empty string from the parts array
+    parts.shift();
+    parts.shift();
+    let params: URLPatternResultParams = {};
 
-  public async match(request: Request) {
-    for (const route of this.routeList) {
-      if (request.method === route.method) {
-        const result = route.urlPattern.exec(request.url);
-        if (result) {
-          const response = route.handler(request, result.pathname.groups, result);
-          if (response instanceof Response) {
-            return response;
-          } else {
-            return await response;
-          }
+    for (let part of parts) {
+      if (node.children.has("/"+part)) {
+        node = node.children.get("/"+part)!;
+      } else {
+        // Check if there's a matching URL parameter
+        let paramNode = Array.from(node.params.values())[0];
+        if (paramNode) {
+          params[paramNode.params.keys().next().value.slice(1)] = part;
+          node = paramNode;
         }
       }
+    }
+
+    if (node.isEnd && node.handler) {
+      return node.handler(req, params, {pathname: req.url});
     }
   }
 }
 
 export type URLPatternResultParams = { [key: string]: string | undefined };
 type Handler = (
-  request: Request,
-  params: URLPatternResultParams,
-  urlPatternResult: URLPatternResult,
+    request: Request,
+    params: URLPatternResultParams,
+    urlPatternResult: URLPatternResult,
 ) => Response | Promise<Response>;
 
 class Route {
