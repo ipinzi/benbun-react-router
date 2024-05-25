@@ -102,6 +102,10 @@ router.add("POST", "/post-route", (request,params,urlPatternResult)=>{
 });
 ```
 
+Ben Bun automatically opens a public route at "/public/" to serve all your public files that you don't want to explicitly route to.
+If you want to explicitly route everything then you don't have to use it.
+Explicitly designating routes may be faster due to Ben Bun's route matching algorithm.
+
 ## Disclaimer
 
 I am not a web developer (anymore) by trade, I'm a game developer. Therefor I may have overlooked some small things.
